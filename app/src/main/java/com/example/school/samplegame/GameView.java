@@ -24,6 +24,10 @@ public class GameView extends View {
 
     OnCirclesChangedListener listener;
 
+    boolean pressed;
+    float x;
+    float y;
+
     public GameView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         level = LevelLoader.loadLevel();
@@ -31,13 +35,22 @@ public class GameView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        x = event.getX();
+        y = event.getY();
+        int action = event.getAction();
+        if (action == MotionEvent.ACTION_UP) {
+            pressed = false;
+        } else if (action == MotionEvent.ACTION_DOWN) {
+            pressed = true;
+            if (y < getHeight() * 0.3) {
+                level.player.speedY = -5;
+            }
+        }
         if (event.getAction() == MotionEvent.ACTION_MOVE) {
-            float x = event.getX();
-            float y = event.getY();
 
             Circle circle = new Circle(x, y,
                     random.nextInt(), 30 + random.nextFloat() * 70);
-            circles.add(circle);
+            //circles.add(circle);
 
             if (listener != null) {
                 listener.onCirclesChanged();
@@ -45,9 +58,15 @@ public class GameView extends View {
 
             int rx = (int) (x / getWidth() * 255);
             int ry = (int) (y / getHeight() * 255);
-            backgroundColor = Color.rgb(rx, ry, 0);
+            //backgroundColor = Color.rgb(rx, ry, 0);
         }
         return true;
+    }
+
+    void movePlayer(float x) {
+        if (pressed) {
+            level.player.move(x > getWidth() / 2);
+        }
     }
 
     void setOnCirclesChangedListener(OnCirclesChangedListener listener) {
@@ -59,6 +78,11 @@ public class GameView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        checkCollisions();
+
+        movePlayer(x);
+        level.player.update();
 
         canvas.translate(-level.player.rect.centerX() + (getWidth() / 2), 0);
 
@@ -90,5 +114,16 @@ public class GameView extends View {
         }
 
         invalidate();
+    }
+
+    private void checkCollisions() {
+        boolean collides = false;
+        for (Block block : level.blocks) {
+            if (RectF.intersects(block.rect, level.player.rect)) {
+                collides = true;
+                break;
+            }
+        }
+        level.player.setFalling(!collides);
     }
 }

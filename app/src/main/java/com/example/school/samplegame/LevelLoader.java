@@ -15,6 +15,7 @@ public class LevelLoader {
 
     static final char PLAYER = '2';
 
+    //TODO use file instead
     static final String LEVEL =
                     "00000000000000\n" +
                     "00000200000000\n" +
